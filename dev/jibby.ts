@@ -3,56 +3,84 @@ class Jibby {
     public hygiene:number;
     public food:number;
     public happyness:number;
+    public isSleeping: boolean;
+
+    public behavior: Behavior;
 
     public div:HTMLElement;
     public x:number;
     public y:number;
-            
+
+    private sleepTimer : number;
+
     constructor(parent:HTMLElement) {
         this.div = document.createElement("jibby");
         parent.appendChild(this.div);
 
-        // start instellingen
         this.x = 0;
         this.y = 220;
         this.hygiene = this.food = this.happyness = 50;
 
-        // click listeners
+        this.sleepTimer = 0;
+
         this.div.addEventListener("click", () => this.onPet());
         document.getElementsByTagName("foodbutton")[0].addEventListener("click", () => this.onEat());
         document.getElementsByTagName("washbutton")[0].addEventListener("click", () => this.onWash());
 
-        // hier het gedrag toekennen
-        // this.behavior = ...
-        
-        // afbeelding voor idle - verplaatsen naar idle gedrag
-        this.div.style.backgroundImage = "url('images/idle.png')";
+        this.behavior = new Idle(this);
+        this.isSleeping = false;
+
+        Emotion.chooseEmotionImage("default", this);
     }
 
     public update():void {
-        // hier het gedrag updaten
-        // ...
-        
-        // waarden verlagen per frame - dit moet in het gedrag staan
-        this.hygiene -= 0.01;
-        this.food -= 0.02;
-        this.happyness -= 0.015;
+        this.behavior.performBehavior();
+        this.sleepTimer += 1;
     }
 
-
     private onPet():void {
-        console.log("you clicked on jibby!");
-        // hier moet je de onPet functie van het gedrag aanroepen
+        if(!Game.gameOverCheck && !this.isSleeping) {
+            this.behavior = new OnPet(this);
+            this.sleepTimer = 0;
+        }
     }
 
     private onWash():void {
-        console.log("washing jibby!");
-        // hier moet je de onWash functie van het gedrag aanroepen
+        if(!Game.gameOverCheck && !this.isSleeping) {
+            this.behavior = new OnWash(this);
+            this.sleepTimer = 0;
+        }
+        else if(!Game.gameOverCheck && this.isSleeping){
+            Emotion.chooseEmotionImage("angry", this);
+            this.happyness -= 2;
+            this.sleepTimer = 0;
+        }
+
     }
 
     private onEat():void {
-        console.log("jibby is eating!");
-        // hier moet je de onEat functie van het gedrag aanroepen
+        if(!Game.gameOverCheck) {
+            this.behavior = new OnEat(this);
+            this.sleepTimer = 0;
+        }
+    }
+
+    public onSleep():void{
+        this.isSleeping = true;
+        if(!Game.gameOverCheck){
+            this.behavior = new onSleep(this);
+        }
+    }
+
+    public jibbysSleepTimer ():void {
+        console.log(this.sleepTimer);
+        if(this.sleepTimer > 300){
+            this.onSleep();
+        }
+        else{
+            this.isSleeping = false;
+            this.sleepTimer += 1;
+        }
     }
 
 
